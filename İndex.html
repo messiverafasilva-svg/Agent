@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AETHER // SWARM PRO — Multi-Agent Execution System</title>
+  <style>
+    :root {
+      --bg: #05070c;
+      --panel: #0a0f1a;
+      --panel-2: #101829;
+      --panel-3: #162138;
+      --border: rgba(148, 163, 184, 0.14);
+      --border-hi: rgba(99, 102, 241, 0.45);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --indigo: #818cf8;
+      --cyan: #22d3ee;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --r-lg: 16px;
+      --r-md: 12px;
+      --r-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(ellipse 75% 45% at 50% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
+        radial-gradient(ellipse 50% 35% at 90% 10%, rgba(34, 211, 238, 0.10), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+      padding: 20px 16px 72px;
+    }
+
+    .app { max-width: 1040px; margin: 0 auto; }
+
+    /* Top bar */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding-bottom: 16px; margin-bottom: 22px; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .mark {
+      width: 40px; height: 40px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--indigo), var(--cyan));
+      display: grid; place-items: center; color: #050811; font-weight: 900; font-size: 0.95rem;
+    }
+    .title { font-size: 1.15rem; font-weight: 850; letter-spacing: -0.02em; }
+    .subtitle { font-size: 0.78rem; color: var(--muted); }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .pill {
+      padding: 6px 11px; border-radius: 999px; font-size: 0.74rem; font-weight: 700;
+      background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+    }
+    .pill.ok { color: var(--emerald); border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.08); }
+
+    /* Layout grid */
+    .main-grid {
+      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 16px; margin-bottom: 18px;
+    }
+    @media (max-width: 860px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-lg);
+      padding: 18px;
+    }
+    .card-title { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 12px; }
+
+    label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+    textarea, input, select {
+      width: 100%; background: #050810; color: var(--text); border: 1px solid var(--border);
+      border-radius: var(--r-md); padding: 11px 13px; font-size: 0.92rem; font-family: inherit;
+      margin-bottom: 12px; transition: border-color 0.15s ease;
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    textarea:focus, input:focus, select:focus { outline: none; border-color: var(--indigo); }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 540px) { .row-2 { grid-template-columns: 1fr; } }
+
+    .presets { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+    .preset {
+      background: var(--panel-2); color: #cbd5e1; border: 1px solid var(--border);
+      border-radius: 999px; padding: 6px 11px; font-size: 0.76rem; font-weight: 700; cursor: pointer;
+    }
+    .preset:hover { border-color: var(--cyan); color: #fff; }
+
+    button {
+      font-family: inherit; font-weight: 800; font-size: 0.9rem; border-radius: var(--r-md);
+      padding: 12px 15px; cursor: pointer; border: 1px solid transparent; transition: all 0.14s ease;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary {
+      width: 100%; background: linear-gradient(135deg, var(--indigo), var(--cyan));
+      color: #040812; font-weight: 900;
+    }
+    .btn-ghost {
+      background: var(--panel-2); color: var(--text); border-color: var(--border);
+      padding: 8px 12px; font-size: 0.78rem; border-radius: var(--r-sm);
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--border-hi); }
+
+    /* Pipeline stages */
+    .pipeline { display: flex; flex-direction: column; gap: 9px; }
+    .stage {
+      background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--r-md);
+      padding: 11px 13px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    }
+    .stage.active { border-color: var(--cyan); background: rgba(34, 211, 238, 0.06); }
+    .stage.done { border-color: rgba(52, 211, 153, 0.4); }
+    .stage-name { font-size: 0.84rem; font-weight: 800; }
+    .stage-role { font-size: 0.74rem; color: var(--muted); }
+    .stage-badge {
+      font-size: 0.7rem; font-weight: 800; padding: 3px 8px; border-radius: 999px;
+      background: var(--panel-3); color: var(--muted); white-space: nowrap;
+    }
+    .stage.active .stage-badge { background: rgba(34, 211, 238, 0.18); color: var(--cyan); }
+    .stage.done .stage-badge { background: rgba(52, 211, 153, 0.18); color: var(--emerald); }
+
+    /* Workspace Tabs */
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tab {
+      background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+      padding: 8px 13px; border-radius: var(--r-sm); font-size: 0.8rem; font-weight: 800; cursor: pointer;
+    }
+    .tab.active { background: var(--panel-3); color: var(--text); border-color: var(--indigo); }
+
+    .out-block {
+      background: #060913; border: 1px solid var(--border); border-radius: var(--r-md);
+      padding: 14px; white-space: pre-wrap; font-size: 0.9rem; color: #e2e8f0; min-height: 180px;
+    }
+    .handoff-item {
+      border-bottom: 1px solid var(--border); padding: 12px 0;
+    }
+    .handoff-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .handoff-meta { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+    .handoff-who { font-weight: 800; font-size: 0.88rem; color: var(--indigo); }
+    .handoff-src { font-size: 0.72rem; color: var(--muted); }
+
+    .status-line { font-size: 0.8rem; color: var(--muted); margin-top: 10px; min-height: 18px; }
+    .note { font-size: 0.74rem; color: var(--dim); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">AS</div>
+        <div>
+          <div class="title">AETHER // SWARM PRO</div>
+          <div class="subtitle">Çoklu Ajan İş Akışı • Sağlayıcı Yedekleme • Sıfır Maliyet Çalışma Alanı</div>
+        </div>
+      </div>
+      <div class="pills">
+        <span class="pill ok" id="modePill">0 TL • Hazır</span>
+        <span class="pill" id="providerPill">Uç Nokta: Otomatik</span>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <section class="card">
+        <div class="card-title">Görev & Kısıt Komutası</div>
+        <div class="presets">
+          <button type="button" class="preset" data-g="Karmaşık bir hedefi 7 günde adım adım icra edilebilir plana dönüştürmek" data-c="7 gün, sıfır bütçe, net öncelik">7 Günlük İcra</button>
+          <button type="button" class="preset" data-g="Yüksek belirsizlik içeren stratejik bir kararda en yüksek getiri/risk dengesini bulmak" data-c="48 saat, net kıyas, hızlı doğrulama">Karar & Strateji</button>
+          <button type="button" class="preset" data-g="Sıfır reklam bütçesiyle organik içerik ve paylaşım döngüsü kurmak" data-c="14 gün, sıfır bütçe, günlük çıktı">Organik Büyüme</button>
+        </div>
+
+        <label for="goalInput">Ana Görev veya Problem</label>
+        <textarea id="goalInput" placeholder="Ajan ekibinin çözmesini istediğin net görevi yaz..."></textarea>
+
+        <div class="row-2">
+          <div>
+            <label for="constraintInput">Süre / Bütçe / Kısıt</label>
+            <input id="constraintInput" placeholder="Örn: 7 gün, sıfır maliyet, tek kişi" />
+          </div>
+          <div>
+            <label for="providerMode">Sağlayıcı Stratejisi</label>
+            <select id="providerMode">
+              <option value="auto" selected>Otomatik (Ücretsiz Uç Nokta + Yerel Yedek)</option>
+              <option value="custom">Özel OpenAI-Uyumlu Endpoint / Ücretsiz Key</option>
+              <option value="local">Doğrudan Yerel Motor (Ağsız / Anında)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="customBox" style="display:none;">
+          <div class="row-2">
+            <div>
+              <label for="endpointInput">Endpoint URL</label>
+              <input id="endpointInput" placeholder="https://api.groq.com/openai/v1/chat/completions" />
+            </div>
+            <div>
+              <label for="modelInput">Model Adı</label>
+              <input id="modelInput" placeholder="llama-3.3-70b-versatile" />
+            </div>
+          </div>
+          <label for="keyInput">API Anahtarı (İsteğe Bağlı — Sadece Tarayıcıda Saklanır)</label>
+          <input id="keyInput" type="password" placeholder="Ücretsiz katman API anahtarı" />
+        </div>
+
+        <button type="button" id="runBtn" class="btn-primary">4 Ajanlı Hattı Çalıştır</button>
+        <div id="statusLine" class="status-line">Hazır. Görev verildiğinde ajanlar sırayla devralır.</div>
+      </section>
+
+      <aside class="card">
+        <div class="card-title">Ajan Hattı & Devir (Handoff)</div>
+        <div class="pipeline">
+          <div class="stage" id="st-architect">
+            <div>
+              <div class="stage-name">1. Mimar (Architect)</div>
+              <div class="stage-role">Kök neden, sistem yapısı ve kaldıraç</div>
+            </div>
+            <span class="stage-badge" id="bd-architect">BEKLEMEDE</span>
+          </div>
+          <div class="stage" id="st-planner">
+            <div>
+              <div class="stage-name">2. İcra Planlayıcı (Executor)</div>
+              <div class="stage-role">Zamanlamalı somut adım ve çıktı listesi</div>
+            </div>
+            <span class="stage-badge" id="bd-planner">BEKLEMEDE</span>
+          </div>
+          <div class="stage" id="st-auditor">
+            <div>
+              <div class="stage-name">3. Denetçi (Auditor)</div>
+              <div class="stage-role">Riskler, kör noktalar ve doğrulama kriteri</div>
+            </div>
+            <span class="stage-badge" id="bd-auditor">BEKLEMEDE</span>
+          </div>
+          <div class="stage" id="st-synthesizer">
+            <div>
+              <div class="stage-name">4. Sentezleyici (Synthesizer)</div>
+              <div class="stage-role">Tek sayfalık net icra özeti ve paylaşım metni</div>
+            </div>
+            <span class="stage-badge" id="bd-synthesizer">BEKLEMEDE</span>
+          </div>
+        </div>
+        <div class="note">Her ajan yalnızca kendinden önceki ajanın ürettiği yapılandırılmış özeti alarak çalışır.</div>
+      </aside>
+    </div>
+
+    <section class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+        <div class="tabs" style="margin-bottom:0;">
+          <button type="button" class="tab active" data-tab="brief">Final İcra Özeti</button>
+          <button type="button" class="tab" data-tab="chain">Ajan Devir Günlüğü</button>
+          <button type="button" class="tab" data-tab="share">Paylaşım & Dışa Aktarım</button>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" id="copyBtn" class="btn-ghost">Kopyala</button>
+          <button type="button" id="mdBtn" class="btn-ghost">.MD İndir</button>
+          <button type="button" id="jsonBtn" class="btn-ghost">.JSON İndir</button>
+          <button type="button" id="clearBtn" class="btn-ghost">Temizle</button>
+        </div>
+      </div>
+
+      <div id="tab-brief" class="out-block">Henüz çalıştırılmadı. Soldan bir görev verip <strong>4 Ajanlı Hattı Çalıştır</strong> butonuna bas.</div>
+      <div id="tab-chain" class="out-block" style="display:none; white-space:normal;">Henüz ajan devir kaydı yok.</div>
+      <div id="tab-share" class="out-block" style="display:none; white-space:normal;">
+        <p style="margin-bottom:10px; color:var(--muted);">Mevcut görevi ve kısıtı URL parametresiyle taşıyan bağlantıyı kopyalayabilir veya sonucu dosya olarak indirebilirsin:</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" id="copyLinkBtn" class="btn-ghost">Görev Linkini Kopyala</button>
+          <button type="button" id="nativeShareBtn" class="btn-ghost">Cihaz Paylaş Menüsü</button>
+        </div>
+        <div id="sharePreview" class="note" style="margin-top:10px;"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORE_KEY = "aether_swarm_pro_v1";
+
+    const STAGES = [
+      { id: "architect", title: "1. Mimar", focus: "Kök neden, darboğaz ve en yüksek kaldıraçlı mimari karar" },
+      { id: "planner", title: "2. İcra Planlayıcı", focus: "İlk 24-72 saat ve vade boyunca ölçülebilir somut aksiyon adımları" },
+      { id: "auditor", title: "3. Denetçi", focus: "En kritik 3 risk, varsayım hatası ve doğrulama ölçütü" },
+      { id: "synthesizer", title: "4. Sentezleyici", focus: "Net, kısa, doğrudan uygulanabilir nihai icra brifingi" }
+    ];
+
+    const defaultState = () => ({
+      goal: "",
+      constraint: "",
+      providerMode: "auto",
+      endpoint: "",
+      model: "",
+      apiKey: "",
+      results: [],
+      finalBrief: ""
+    });
+
+    let state = (() => {
+      try { return { ...defaultState(), ...JSON.parse(localStorage.getItem(STORE_KEY) || "{}") }; }
+      catch { return defaultState(); }
+    })();
+
+    const el = {
+      goal: document.getElementById("goalInput"),
+      constraint: document.getElementById("constraintInput"),
+      providerMode: document.getElementById("providerMode"),
+      customBox: document.getElementById("customBox"),
+      endpoint: document.getElementById("endpointInput"),
+      model: document.getElementById("modelInput"),
+      apiKey: document.getElementById("keyInput"),
+      runBtn: document.getElementById("runBtn"),
+      statusLine: document.getElementById("statusLine"),
+      modePill: document.getElementById("modePill"),
+      providerPill: document.getElementById("providerPill"),
+      tabBrief: document.getElementById("tab-brief"),
+      tabChain: document.getElementById("tab-chain"),
+      tabShare: document.getElementById("tab-share"),
+      sharePreview: document.getElementById("sharePreview")
+    };
+
+    function save() {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {}
+    }
+
+    function toggleCustomBox() {
+      const isCustom = el.providerMode.value === "custom";
+      el.customBox.style.display = isCustom ? "block" : "none";
+      el.providerPill.textContent =
+        el.providerMode.value === "custom" ? "Uç Nokta: Özel" :
+        el.providerMode.value === "local" ? "Uç Nokta: Yerel" : "Uç Nokta: Otomatik";
+    }
+
+    function setStage(id, cls, label) {
+      const box = document.getElementById("st-" + id);
+      const bd = document.getElementById("bd-" + id);
+      box.className = "stage" + (cls ? " " + cls : "");
+      bd.textContent = label;
+    }
+
+    function resetStages() {
+      STAGES.forEach(s => setStage(s.id, "", "BEKLEMEDE"));
+    }
+
+    function localAgent(stageId, goal, constraint, prevSummary) {
+      const c = constraint || "belirtilen süre ve mevcut kaynaklar";
+      if (stageId === "architect") {
+        return [
+          `• Ana Darboğaz: "${goal}" (${c}) için en büyük kayıp, net bir başlangıç çıktısı tanımlanmadan paralel işlere dağılmaktır.`,
+          `• Kaldıraç Noktası: Tek bir ölçülebilir ilk çıktıyı en kısa sürede üretip geri bildirim döngüsünü başlatmak.`
+        ].join("\n");
+      }
+      if (stageId === "planner") {
+        return [
+          `• 0–24 Saat: Hedefi tek cümlelik somut sonuca çevir; ilk çalışan/görünür taslağı tamamla.`,
+          `• 24–72 Saat: İlk çıktıyı test et veya paylaş; en yüksek etkiyi veren adımı sabitle.`,
+          `• Sonraki Döngü: Çalışmayan adımı ayıkla ve günlük tek bir ana metrik üzerinden ilerle.`
+        ].join("\n");
+      }
+      if (stageId === "auditor") {
+        return [
+          `• Risk 1 (Scope Creep): Başlangıçta kapsamı şişirmek teslimi geciktirir.`,
+          `• Risk 2 (Ölçümsüzlük): Net çıktı tanımı olmazsa ilerleme belirsiz kalır.`,
+          `• Doğrulama Kriteri: Her aşamanın sonunda somut, gösterilebilir bir çıktı bulunmalı.`
+        ].join("\n");
+      }
+      return [
+        `HEDEF: ${goal}`,
+        `KISIT: ${c}`,
+        `ÖNCELİKLİ İCRA: Önce tek bir somut çıktı üret, 72 saat içinde test et, kapsam şişirmeyi engelle ve yalnızca ölçülebilir ilerleme sağlayan adımı sürdür.`,
+        prevSummary ? `DEVİR ÖZETİ: ${prevSummary.slice(0, 180)}...` : ""
+      ].filter(Boolean).join("\n");
+    }
+
+    async function callModel(stage, goal, constraint, prevSummary) {
+      if (el.providerMode.value === "local") {
+        return { text: localAgent(stage.id, goal, constraint, prevSummary), src: "Yerel Motor" };
+      }
+
+      const sys = `Sen profesyonel bir çoklu-ajan sisteminde "${stage.title}" ajanısın. Görevin: ${stage.focus}. Kısa, net, yapılandırılmış ve doğrudan uygulanabilir Türkçe çıktı üret.`;
+      const usr = [
+        `Görev: ${goal}`,
+        `Kısıt: ${constraint || "Belirtilmedi"}`,
+        prevSummary ? `Önceki Ajan Devri:\n${prevSummary}` : ""
+      ].filter(Boolean).join("\n\n");
+
+      const messages = [
+        { role: "system", content: sys },
+        { role: "user", content: usr }
+      ];
+
+      if (el.providerMode.value === "custom" && el.endpoint.value.trim()) {
+        const ac = new AbortController();
+        const t = setTimeout(() => ac.abort(), 9000);
+        try {
+          const headers = { "Content-Type": "application/json" };
+          if (el.key.value.trim()) headers["Authorization"] = `Bearer ${el.key.value.trim()}`;
+          const res = await fetch(el.endpoint.value.trim(), {
+            method: "POST",
+            headers,
+            signal: ac.signal,
+            body: JSON.stringify({
+              model: el.model.value.trim() || "gpt-4o-mini",
+              messages,
+              temperature: 0.35
+            })
+          });
+          clearTimeout(t);
+          if (res.ok) {
+            const data = await res.json();
+            const txt = data?.choices?.[0]?.message?.content?.trim();
+            if (txt && txt.length > 25) return { text: txt, src: "Özel Endpoint" };
+          }
+        } catch {
+          clearTimeout(t);
+        }
+      }
+
+      const ac2 = new AbortController();
+      const t2 = setTimeout(() => ac2.abort(), 7500);
+      try {
+        const res2 = await fetch("https://text.pollinations.ai/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: ac2.signal,
+          body: JSON.stringify({ messages, model: "openai", private: true })
+        });
+        clearTimeout(t2);
+        if (res2.ok) {
+          const raw = (await res2.text()).trim();
+          if (raw && raw.length > 25) return { text: raw, src: "Ücretsiz Canlı AI" };
+        }
+      } catch {
+        clearTimeout(t2);
+      }
+
+      return { text: localAgent(stage.id, goal, constraint, prevSummary), src: "Yerel Yedek" };
+    }
+
+    function renderWorkspace() {
+      if (state.finalBrief) {
+        el.tabBrief.innerHTML = state.finalBrief.replace(/</g, "&lt;");
+      } else {
+        el.tabBrief.innerHTML = 'Henüz çalıştırılmadı. Soldan bir görev verip <strong>4 Ajanlı Hattı Çalıştır</strong> butonuna bas.';
+      }
+
+      if (state.results && state.results.length) {
+        el.tabChain.innerHTML = state.results.map(r => `
+          <div class="handoff-item">
+            <div class="handoff-meta">
+              <span class="handoff-who">${r.title}</span>
+              <span class="handoff-src">${r.src}</span>
+            </div>
+            <div style="white-space:pre-wrap; font-size:0.88rem; color:#e2e8f0;">${r.text.replace(/</g, "&lt;")}</div>
+          </div>
+        `).join("");
+      } else {
+        el.tabChain.textContent = "Henüz ajan devir kaydı yok.";
+      }
+
+      el.sharePreview.textContent = "Bağlantı: " + getShareUrl();
+    }
+
+    function getShareUrl() {
+      const u = new URL(location.href);
+      const g = el.goal.value.trim();
+      const c = el.constraint.value.trim();
+      if (g) u.searchParams.set("g", g); else u.searchParams.delete("g");
+      if (c) u.searchParams.set("c", c); else u.searchParams.delete("c");
+      return u.toString();
+    }
+
+    function downloadFile(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // Init
+    const params = new URLSearchParams(location.search);
+    el.goal.value = params.get("g") || state.goal || "";
+    el.constraint.value = params.get("c") || state.constraint || "";
+    el.providerMode.value = state.providerMode || "auto";
+    el.endpoint.value = state.endpoint || "";
+    el.model.value = state.model || "";
+    el.key.value = state.apiKey || "";
+    toggleCustomBox();
+    renderWorkspace();
+
+    el.providerMode.addEventListener("change", () => {
+      state.providerMode = el.providerMode.value;
+      save();
+      toggleCustomBox();
+      renderWorkspace();
+    });
+
+    document.querySelectorAll(".preset").forEach(p => {
+      p.addEventListener("click", () => {
+        el.goal.value = p.dataset.g;
+        el.constraint.value = p.dataset.c;
+        el.sharePreview.textContent = "Bağlantı: " + getShareUrl();
+        el.statusLine.textContent = `"${p.textContent}" senaryosu yüklendi.`;
+      });
+    });
+
+    document.querySelectorAll(".tab").forEach(t => {
+      t.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+        const name = t.dataset.tab;
+        el.tabBrief.style.display = name === "brief" ? "block" : "none";
+        el.tabChain.style.display = name === "chain" ? "block" : "none";
+        el.tabShare.style.display = name === "share" ? "block" : "none";
+      });
+    });
+
+    el.runBtn.addEventListener("click", async () => {
+      const goal = el.goal.value.trim();
+      if (!goal) {
+        el.statusLine.textContent = "Lütfen önce bir görev veya problem yaz.";
+        el.goal.focus();
+        return;
+      }
+      const constraint = el.constraint.value.trim();
+
+      state.goal = goal;
+      state.constraint = constraint;
+      state.endpoint = el.endpoint.value.trim();
+      state.model = el.model.value.trim();
+      state.apiKey = el.key.value.trim();
+      save();
+
+      el.runBtn.disabled = true;
+      el.runBtn.textContent = "Ajan Hattı Çalışıyor...";
+      resetStages();
+
+      const chain = [];
+      let handoffContext = "";
+
+      for (const st of STAGES) {
+        setStage(st.id, "active", "ÇALIŞIYOR");
+        el.statusLine.textContent = `${st.title} işliyor...`;
+        const res = await callModel(st, goal, constraint, handoffContext);
+        chain.push({ id: st.id, title: st.title, text: res.text, src: res.src });
+        handoffContext += `\n[${st.title}]\n${res.text}`;
+        setStage(st.id, "done", res.src.toUpperCase());
+      }
+
+      const synth = chain[chain.length - 1]?.text || "";
+      state.results = chain;
+      state.finalBrief = [
+        `GÖREV: ${goal}`,
+        `KISIT: ${constraint || "Belirtilmedi"}`,
+        "",
+        "NİHAİ İCRA ÖZETİ:",
+        synth
+      ].join("\n");
+
+      save();
+      renderWorkspace();
+      el.statusLine.textContent = "4 ajanlık hat tamamlandı. Final özet ve devir günlüğü hazır.";
+      el.runBtn.disabled = false;
+      el.runBtn.textContent = "4 Ajanlı Hattı Çalıştır";
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const text = state.finalBrief || "";
+      if (!text) { el.statusLine.textContent = "Kopyalanacak çıktı yok."; return; }
+      try { await navigator.clipboard.writeText(text); el.statusLine.textContent = "Final özet kopyalandı."; }
+      catch { prompt("Kopyala:", text); }
+    });
+
+    document.getElementById("mdBtn").addEventListener("click", () => {
+      if (!state.results.length) { el.statusLine.textContent = "İndirilecek çıktı yok."; return; }
+      const md = [
+        `# AETHER // SWARM PRO Çıktısı`,
+        `**Görev:** ${state.goal}`,
+        `**Kısıt:** ${state.constraint || "Belirtilmedi"}`,
+        "",
+        ...state.results.map(r => `## ${r.title} (${r.src})\n\n${r.text}`)
+      ].join("\n\n");
+      downloadFile("aether-swarm-plan.md", md, "text/markdown;charset=utf-8");
+      el.statusLine.textContent = ".MD dosyası indirildi.";
+    });
+
+    document.getElementById("jsonBtn").addEventListener("click", () => {
+      if (!state.results.length) { el.statusLine.textContent = "İndirilecek çıktı yok."; return; }
+      downloadFile("aether-swarm-run.json", JSON.stringify(state, null, 2), "application/json;charset=utf-8");
+      el.statusLine.textContent = ".JSON dosyası indirildi.";
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      state.results = [];
+      state.finalBrief = "";
+      save();
+      resetStages();
+      renderWorkspace();
+      el.statusLine.textContent = "Çalışma alanı temizlendi.";
+    });
+
+    document.getElementById("copyLinkBtn").addEventListener("click", async () => {
+      const url = getShareUrl();
+      try { await navigator.clipboard.writeText(url); el.statusLine.textContent = "Görev bağlantısı kopyalandı."; }
+      catch { prompt("Kopyala:", url); }
+    });
+
+    document.getElementById("nativeShareBtn").addEventListener("click", async () => {
+      const url = getShareUrl();
+      if (navigator.share) {
+        try { await navigator.share({ title: "AETHER // SWARM PRO", url }); return; } catch {}
+      }
+      try { await navigator.clipboard.writeText(url); el.statusLine.textContent = "Bağlantı panoya kopyalandı."; }
+      catch { prompt("Kopyala:", url); }
+    });
+  </script>
+</body>
+</html>
